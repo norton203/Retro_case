@@ -12,5 +12,6 @@ builder.Services.AddScoped(sp => new HttpClient
     BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
 });
 builder.Services.AddSingleton<Retro_case.Services.ThemeState>();
+builder.Services.AddSingleton<Retro_case.Services.AudioSettings>();
 
 await builder.Build().RunAsync();
