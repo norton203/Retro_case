@@ -1,0 +1,18 @@
+@using Retro_case.Models
+@using Retro_case.Services
+@inject ThemeState Theme
+
+<div class="machine-switcher" role="group" aria-label="Switch machine theme">
+    @foreach (var m in new[] { Machine.C64, Machine.Spectrum, Machine.Amstrad })
+    {
+        <button type="button"
+                aria-pressed="@(Theme.Current == m)"
+                @onclick="() => Select(m)">
+            @m.DisplayName()
+        </button>
+    }
+</div>
+
+@code {
+    private async Task Select(Machine m) => await Theme.SetMachineAsync(m);
+}

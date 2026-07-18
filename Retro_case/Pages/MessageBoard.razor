@@ -1,0 +1,42 @@
+@page "/board"
+
+<h1>Message Board</h1>
+<p>
+    This is a static preview. The real board needs a backend — see the note below for the plan.
+</p>
+
+<div class="crt-frame">
+    @foreach (var t in _threads)
+    {
+        <div class="board-row">
+            <span>@t.Title <span class="tag">@t.Machine</span></span>
+            <span class="meta">@t.Replies replies · last @t.LastActive</span>
+        </div>
+    }
+</div>
+
+<section style="margin-top:1.5rem;">
+    <h2>Build note</h2>
+    <p>
+        A real board needs persistence, auth, and moderation — not something to fake in the front end.
+        Options, roughly in order of effort:
+    </p>
+    <ol>
+        <li><strong>Comments-only first:</strong> attach Giscus (GitHub Discussions) per Dev Diary post — ships this week.</li>
+        <li><strong>Own API:</strong> a small ASP.NET Core Web API + SQL Server for threads/replies, called from this
+            page via <code>HttpClient</code>. Straightforward given the day-job stack, but is real ongoing maintenance.</li>
+        <li><strong>Embed existing:</strong> Flarum or Discourse on a subdomain, skinned to match — fastest path to a
+            "real" forum, least control over the look.</li>
+    </ol>
+</section>
+
+@code {
+    private record Thread(string Title, string Machine, int Replies, string LastActive);
+
+    private readonly List<Thread> _threads = new()
+    {
+        new("Anyone still got a working 1541 disk drive?", "C64", 4, "2h ago"),
+        new("CPC vs Spectrum: the loading screech debate, again", "Spectrum", 11, "1d ago"),
+        new("Best modern USB joystick for CPC games?", "Amstrad", 2, "3d ago"),
+    };
+}

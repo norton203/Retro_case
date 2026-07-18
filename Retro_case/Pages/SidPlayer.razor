@@ -1,0 +1,180 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject IJSRuntime JS
+@inject HttpClient Http
+
+<div class="crt-frame sid-player">
+    <h3>SID Player</h3>
+    <p class="meta">
+        Play a .sid file right here, via a small open-source 6510 + SID chip emulator running
+        entirely in your browser (<a href="https://github.com/jhohertz/jsSID" target="_blank" rel="noopener">jsSID</a>, GPLv2).
+        On C64 it plays as the real SID chip would. Switch the machine theme to Spectrum or
+        Amstrad and the same tune gets reshaped to approximate <em>that</em> chip instead —
+        1-bit beeper crush for the Spectrum, coarser AY-style volume steps for the Amstrad.
+    </p>
+
+    <h4>From the library</h4>
+    @if (_libraryError is not null)
+    {
+        <p class="sid-error">@_libraryError</p>
+    }
+    else if (_library is null)
+    {
+        <p class="meta">Loading library…</p>
+    }
+    else if (_library.Count == 0)
+    {
+        <p class="meta">
+            No SIDs in <code>wwwroot/sids/</code> yet — drop some files in there and list them in
+            <code>manifest.json</code> (see the README alongside it).
+        </p>
+    }
+    else
+    {
+        <ul class="sid-library-list">
+            @foreach (var entry in _library)
+            {
+                <li>
+                    <button @onclick="() => LoadFromLibrary(entry)">▶ @entry.Name</button>
+                    @if (!string.IsNullOrWhiteSpace(entry.Author))
+                    {
+                        <span class="meta">— @entry.Author</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    <h4>Or upload your own</h4>
+    <InputFile OnChange="HandleFile" accept=".sid" />
+
+    @if (_error is not null)
+    {
+        <p class="sid-error">@_error</p>
+    }
+
+    @if (_meta is not null)
+    {
+        <div class="sid-info">
+            <div><strong>@_meta.Name</strong></div>
+            <div class="meta">@_meta.Author @(_meta.Published.Length > 0 ? $"— {_meta.Published}" : "")</div>
+            @if (_meta.TotalTracks > 1)
+            {
+                <div class="meta">Tune @_meta.CurrentTrack / @_meta.TotalTracks</div>
+            }
+        </div>
+        <div class="button-row">
+            @if (!_isPlaying)
+            {
+                <button @onclick="Play">▶ Play</button>
+            }
+            else
+            {
+                <button @onclick="Stop">■ Stop</button>
+            }
+            @if (_meta.TotalTracks > 1)
+            {
+                <button @onclick="Prev">⏮ Prev tune</button>
+                <button @onclick="Next">⏭ Next tune</button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private const long MaxFileSize = 200_000; // real SID files are a few KB to a few tens of KB
+
+    private List<SidEntry>? _library;
+    private string? _libraryError;
+
+    private SidMeta? _meta;
+    private bool _isPlaying;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _library = await Http.GetFromJsonAsync<List<SidEntry>>("sids/manifest.json") ?? new();
+        }
+        catch
+        {
+            _libraryError = "Couldn't load the SID library manifest (sids/manifest.json).";
+            _library = new();
+        }
+    }
+
+    private async Task LoadFromLibrary(SidEntry entry)
+    {
+        _error = null;
+        _meta = null;
+        _isPlaying = false;
+        try
+        {
+            var bytes = await Http.GetByteArrayAsync($"sids/{entry.File}");
+            var base64 = Convert.ToBase64String(bytes);
+            _meta = await JS.InvokeAsync<SidMeta>("threebitSid.loadFromBase64", base64);
+        }
+        catch
+        {
+            _error = $"Couldn't load {entry.File} from the server.";
+        }
+    }
+
+    private async Task HandleFile(InputFileChangeEventArgs e)
+    {
+        _error = null;
+        _meta = null;
+        _isPlaying = false;
+
+        var file = e.File;
+        if (file.Size > MaxFileSize)
+        {
+            _error = "That's larger than a real SID file should be — pick one under 200KB.";
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(MaxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            _meta = await JS.InvokeAsync<SidMeta>("threebitSid.loadFromBase64", base64);
+        }
+        catch
+        {
+            _error = "Couldn't read that as a SID file — check it's a valid PSID/RSID export.";
+        }
+    }
+
+    private async Task Play()
+    {
+        await JS.InvokeVoidAsync("threebitSid.play");
+        _isPlaying = true;
+    }
+
+    private async Task Stop()
+    {
+        await JS.InvokeVoidAsync("threebitSid.stop");
+        _isPlaying = false;
+    }
+
+    private async Task Next() => _meta = await JS.InvokeAsync<SidMeta>("threebitSid.next");
+    private async Task Prev() => _meta = await JS.InvokeAsync<SidMeta>("threebitSid.prev");
+
+    private class SidEntry
+    {
+        public string File { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string? Author { get; set; }
+    }
+
+    private class SidMeta
+    {
+        public string Name { get; set; } = "";
+        public string Author { get; set; } = "";
+        public string Published { get; set; } = "";
+        public int CurrentTrack { get; set; }
+        public int TotalTracks { get; set; }
+    }
+}

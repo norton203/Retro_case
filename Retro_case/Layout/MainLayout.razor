@@ -1,0 +1,22 @@
+@inherits LayoutComponentBase
+
+<header class="site-header">
+    <div class="stripe-bar"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="container">
+        <div class="brand">THREEBIT.ZONE</div>
+        <NavMenu />
+        <div style="margin-top:0.6rem">
+            <MachineSwitcher />
+        </div>
+    </div>
+</header>
+
+<main class="container" style="flex:1; padding-top:1.25rem; padding-bottom:2rem;">
+    @Body
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        Built on Blazor WebAssembly. No emulation, no plugins — just a browser and the C64/Spectrum/Amstrad you remember (mostly).
+    </div>
+</footer>

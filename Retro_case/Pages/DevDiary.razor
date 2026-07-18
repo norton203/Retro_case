@@ -1,0 +1,33 @@
+@page "/dev-diary"
+
+<h1>Dev Diary</h1>
+<p>Notes from building Threebit — and from the day job, when the two threads cross over.</p>
+
+<div class="card-grid">
+    @foreach (var post in _posts)
+    {
+        <div class="crt-frame card">
+            <div class="meta">@post.Date · @post.Category</div>
+            <h3>@post.Title</h3>
+            <p>@post.Excerpt</p>
+            <span class="tag">@post.Tag</span>
+        </div>
+    }
+</div>
+
+@code {
+    private record Post(string Date, string Category, string Title, string Excerpt, string Tag);
+
+    private readonly List<Post> _posts = new()
+    {
+        new("12 JUL", "DEV DIARY", "Why the border colour matters more than you think",
+            "Rebuilding a 40-year-old palette in CSS variables taught me more about constraint-driven design than any style guide has.", "css"),
+        new("05 JUL", "VIBE CODING", "Getting a sprite to move without a game engine",
+            "Canvas, requestAnimationFrame, and a lot of squinting at 8x8 pixel grids.", "canvas"),
+        new("28 JUN", "DEV DIARY", "Blazor WASM on a phone: what actually breaks",
+            "Touch targets, viewport quirks, and why 'it works on desktop' means nothing yet.", "blazor"),
+    };
+
+    // TODO: replace with an HttpClient call to a real posts API/markdown source
+    // once the backend for the message board exists — same data store, two views.
+}

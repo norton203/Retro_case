@@ -1,0 +1,490 @@
+/* ============================================================
+   THREEBIT — token system
+   Three machines, one shell. Palette + font swap on data-machine.
+   ============================================================ */
+
+:root {
+    --font-display: 'Press Start 2P', monospace; /* used ONLY for boot text + badges */
+    --font-body: 'VT323', monospace; /* everything else — readable at size */
+    --font-utility: 'Courier New', monospace; /* captions, code, meta */
+
+    --radius: 0;
+    --scanline-opacity: 0.10;
+}
+
+/* ---------- Machine palettes ---------- */
+
+/* Commodore 64 — default */
+body[data-machine="c64"] {
+    --bg: #40318D;
+    --surface: #35298263;
+    --border: #8B7FE0;
+    --text: #ACA7F0;
+    --text-bright: #FFFFFF;
+    --accent: #ACA7F0;
+    --accent-2: #FFFFFF;
+    --stripe-1: #40318D;
+    --stripe-2: #8B7FE0;
+}
+
+/* Sinclair ZX Spectrum */
+body[data-machine="spectrum"] {
+    --bg: #000000;
+    --surface: #0d0d0d;
+    --border: #FFFFFF;
+    --text: #E8E8E8;
+    --text-bright: #FFFFFF;
+    --accent: #F2A900;
+    --accent-2: #D6221B;
+    --stripe-1: #D6221B;
+    --stripe-2: #F2A900;
+    --stripe-3: #3FA746;
+    --stripe-4: #2AACBE;
+    --stripe-5: #6F4E9C;
+}
+
+/* Amstrad CPC — green phosphor mode */
+body[data-machine="amstrad"] {
+    --bg: #000000;
+    --surface: #001600;
+    --border: #29D82B;
+    --text: #29D82B;
+    --text-bright: #7CFF7E;
+    --accent: #29D82B;
+    --accent-2: #7CFF7E;
+    --stripe-1: #001600;
+    --stripe-2: #29D82B;
+}
+
+/* ---------- Base ---------- */
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 1.35;
+    transition: background 0.4s steps(6), color 0.4s steps(6);
+}
+
+#app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+    a:hover, a:focus-visible {
+        text-decoration: underline;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: normal;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+}
+
+h1 {
+    font-size: 1.4rem;
+}
+
+h2 {
+    font-size: 1.05rem;
+}
+
+h3 {
+    font-size: 0.85rem;
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+/* ---------- CRT chrome (subtle — applies to every theme) ---------- */
+
+.crt-frame {
+    position: relative;
+    border: 3px solid var(--border);
+    background: var(--surface);
+}
+
+    .crt-frame::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient( to bottom, rgba(0,0,0,var(--scanline-opacity)) 0px, rgba(0,0,0,var(--scanline-opacity)) 1px, transparent 2px, transparent 3px );
+    }
+
+.crt-flicker {
+    animation: flicker 2.6s infinite;
+}
+
+@keyframes flicker {
+    0%, 96%, 100% {
+        opacity: 1;
+    }
+
+    97% {
+        opacity: 0.82;
+    }
+
+    98% {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .crt-flicker, * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ---------- Nav / header ---------- */
+
+.site-header {
+    border-bottom: 3px solid var(--border);
+    padding: 0.9rem 0;
+}
+
+    .site-header .brand {
+        font-family: var(--font-display);
+        font-size: 0.95rem;
+        color: var(--text-bright);
+    }
+
+.site-nav {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-top: 0.6rem;
+    font-size: 1.15rem;
+}
+
+    .site-nav a.active {
+        color: var(--text-bright);
+        text-decoration: underline;
+    }
+
+/* Rainbow stripe motif — only meaningful on Spectrum, hidden elsewhere via variables collapsing to two tones */
+.stripe-bar {
+    height: 6px;
+    display: flex;
+}
+
+    .stripe-bar span {
+        flex: 1;
+        background: var(--stripe-1);
+    }
+
+        .stripe-bar span:nth-child(2) {
+            background: var(--stripe-2);
+        }
+
+        .stripe-bar span:nth-child(3) {
+            background: var(--stripe-3, var(--stripe-2));
+        }
+
+        .stripe-bar span:nth-child(4) {
+            background: var(--stripe-4, var(--stripe-1));
+        }
+
+        .stripe-bar span:nth-child(5) {
+            background: var(--stripe-5, var(--stripe-2));
+        }
+
+/* ---------- Machine switcher (signature element) ---------- */
+
+.machine-switcher {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    font-family: var(--font-utility);
+    font-size: 0.85rem;
+}
+
+    .machine-switcher button {
+        font-family: var(--font-utility);
+        font-size: 0.8rem;
+        padding: 0.4rem 0.7rem;
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+        cursor: pointer;
+    }
+
+        .machine-switcher button:hover {
+            color: var(--text-bright);
+            border-color: var(--text-bright);
+        }
+
+        .machine-switcher button[aria-pressed="true"] {
+            background: var(--border);
+            color: var(--bg);
+            font-weight: bold;
+        }
+
+/* ---------- Boot screen (hero) ---------- */
+
+.boot-screen {
+    padding: 1.4rem;
+    min-height: 260px;
+    white-space: pre-wrap;
+    font-family: var(--font-utility);
+    font-size: 1.05rem;
+}
+
+    .boot-screen .cursor-block {
+        display: inline-block;
+        width: 0.6em;
+        height: 1em;
+        background: var(--text-bright);
+        vertical-align: text-bottom;
+        animation: blink 1s steps(1) infinite;
+    }
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* ---------- Cards (blog / board) ---------- */
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.card {
+    padding: 1rem;
+}
+
+    .card .meta {
+        font-family: var(--font-utility);
+        font-size: 0.75rem;
+        color: var(--text);
+        opacity: 0.75;
+    }
+
+.tag {
+    display: inline-block;
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.4rem;
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    margin-right: 0.35rem;
+}
+
+/* ---------- Board list ---------- */
+
+.board-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+}
+
+    .board-row .meta {
+        font-family: var(--font-utility);
+        font-size: 0.75rem;
+        opacity: 0.75;
+    }
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+    margin-top: auto;
+    border-top: 3px solid var(--border);
+    padding: 1rem 0;
+    font-family: var(--font-utility);
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* ---------- Blazor error UI (keep functional, retro-skinned) ---------- */
+
+#blazor-error-ui {
+    background: var(--surface);
+    border-top: 3px solid var(--accent-2, var(--border));
+    color: var(--text);
+    display: none;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+    padding: 0.7rem 1rem;
+    font-family: var(--font-utility);
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        float: right;
+    }
+
+.initial-loader {
+    padding: 2rem;
+    font-family: var(--font-utility);
+}
+
+/* ---------- BBS door games ---------- */
+
+.ascii-banner {
+    font-family: var(--font-utility);
+    font-size: 0.85rem;
+    line-height: 1.3;
+    padding: 1rem;
+    overflow-x: auto;
+    color: var(--text-bright);
+}
+
+.wumpus-log {
+    padding: 1rem;
+    font-family: var(--font-utility);
+    font-size: 1.05rem;
+    max-height: 340px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.wumpus-controls {
+    margin-top: 1rem;
+    font-family: var(--font-utility);
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.6rem 0;
+}
+
+    .button-row button, .shoot-toggle, .wumpus-controls > button {
+        font-family: var(--font-utility);
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
+    }
+
+        .button-row button:hover, .shoot-toggle:hover, .wumpus-controls > button:hover {
+            color: var(--text-bright);
+            border-color: var(--text-bright);
+        }
+
+.shoot-toggle {
+    border-color: var(--accent-2, var(--border));
+}
+
+/* ---------- Header controls (machine switcher + audio toggles) ---------- */
+
+.header-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.6rem;
+}
+
+.audio-controls {
+    display: flex;
+    gap: 0.5rem;
+    font-family: var(--font-utility);
+    font-size: 0.85rem;
+}
+
+    .audio-controls button {
+        font-family: var(--font-utility);
+        font-size: 0.8rem;
+        padding: 0.4rem 0.7rem;
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+        cursor: pointer;
+    }
+
+        .audio-controls button:hover {
+            color: var(--text-bright);
+            border-color: var(--text-bright);
+        }
+
+        .audio-controls button[aria-pressed="false"] {
+            opacity: 0.55;
+        }
+
+.track-name {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- SID player ---------- */
+
+.sid-player {
+    padding: 1.2rem;
+    margin: 1.25rem 0;
+}
+
+    .sid-player h3 {
+        margin-top: 0;
+    }
+
+.sid-info {
+    margin: 0.9rem 0 0.4rem;
+}
+
+.sid-error {
+    color: var(--accent-2, var(--text-bright));
+    font-family: var(--font-utility);
+}
+
+.sid-library-list {
+    list-style: none;
+    margin: 0.4rem 0 1rem;
+    padding: 0;
+}
+
+    .sid-library-list li {
+        padding: 0.3rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .sid-library-list button {
+        font-family: var(--font-utility);
+        background: transparent;
+        border: none;
+        color: var(--accent);
+        cursor: pointer;
+        padding: 0;
+        font-size: 1rem;
+    }
+
+        .sid-library-list button:hover {
+            color: var(--text-bright);
+            text-decoration: underline;
+        }

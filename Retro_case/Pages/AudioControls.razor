@@ -1,0 +1,23 @@
+@using Retro_case.Services
+@inject AudioSettings Audio
+@implements IDisposable
+
+<div class="audio-controls">
+    <button @onclick="ToggleSfx" aria-pressed="@Audio.SfxEnabled" title="Toggle sound effects (modem connect, etc.)">
+        🔊 SFX: @(Audio.SfxEnabled ? "ON" : "OFF")
+    </button>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Audio.OnChange += StateHasChanged;
+    }
+
+    private async Task ToggleSfx() => await Audio.ToggleSfxAsync();
+
+    public void Dispose()
+    {
+        Audio.OnChange -= StateHasChanged;
+    }
+}

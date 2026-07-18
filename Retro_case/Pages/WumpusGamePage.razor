@@ -1,0 +1,59 @@
+﻿@page "/bbs/wumpus"
+@using RetroSite.Models
+
+<h1>Hunt the Wumpus</h1>
+
+<div class="crt-frame wumpus-log">
+    @foreach (var line in _game.Log)
+    {
+        <div>@line</div>
+    }
+</div>
+
+@if (!_game.IsOver)
+{
+    <div class="wumpus-controls">
+        <div>
+            <strong>Arrows left: @_game.Arrows</strong> — @(_shootMode ? "choose a room to SHOOT into:" : "choose a room to MOVE into, or arm your bow:")
+        </div>
+        <div class="button-row">
+            @foreach (var room in _game.AdjacentRooms)
+            {
+                <button @onclick="() => Choose(room)">Room @room</button>
+            }
+        </div>
+        <button class="shoot-toggle" @onclick="ToggleShoot">
+            @(_shootMode ? "Cancel shot" : "Aim bow")
+        </button>
+    </div>
+}
+else
+{
+    <div class="wumpus-controls">
+        <p><strong>@(_game.Won ? "You survived. Not everyone does." : "The cave keeps your bones.")</strong></p>
+        <button @onclick="Restart">Play again</button>
+        <a href="bbs">Back to the door list</a>
+    </div>
+}
+
+@code {
+    private WumpusGame _game = new();
+    private bool _shootMode;
+
+    private void ToggleShoot() => _shootMode = !_shootMode;
+
+    private void Choose(int room)
+    {
+        if (_shootMode)
+        {
+            _game.Shoot(room);
+            _shootMode = false;
+        }
+        else
+        {
+            _game.Move(room);
+        }
+    }
+
+    private void Restart() => _game = new WumpusGame();
+}

@@ -1,0 +1,60 @@
+@using Retro_case.Models
+@using Retro_case.Services
+@inject ThemeState Theme
+@implements IDisposable
+
+<div class="crt-frame boot-screen" aria-live="polite">
+    @((MarkupString)_rendered)<span class="cursor-block" aria-hidden="true"></span>
+</div>
+
+@code {
+    private string _rendered = "";
+    private CancellationTokenSource? _cts;
+
+    protected override void OnInitialized()
+    {
+        Theme.OnChange += HandleThemeChanged;
+        _ = PlayBootSequence(Theme.Current);
+    }
+
+    private void HandleThemeChanged()
+    {
+        _ = PlayBootSequence(Theme.Current);
+    }
+
+    private async Task PlayBootSequence(Machine machine)
+    {
+        _cts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _cts = cts;
+
+        _rendered = "";
+        StateHasChanged();
+
+        try
+        {
+            foreach (var line in machine.BootLines())
+            {
+                foreach (var ch in line)
+                {
+                    _rendered += System.Net.WebUtility.HtmlEncode(ch.ToString());
+                    StateHasChanged();
+                    await Task.Delay(12, cts.Token);
+                }
+                _rendered += "\n";
+                StateHasChanged();
+                await Task.Delay(120, cts.Token);
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // superseded by a newer boot sequence (theme switched mid-animation) — expected
+        }
+    }
+
+    public void Dispose()
+    {
+        Theme.OnChange -= HandleThemeChanged;
+        _cts?.Cancel();
+    }
+}

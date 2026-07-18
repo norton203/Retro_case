@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>LOAD"THREEBIT",8,1</title>
+    <base href="/" />
+
+    <!-- Display face used sparingly (boot screens, badges) and body face for readability -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" href="favicon.png" />
+</head>
+<body data-machine="c64">
+    <div id="app">
+        <div class="initial-loader">
+            <p class="crt-flicker">INITIALIZING...</p>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="js/app.js"></script>
+    <script src="js/audio.js"></script>
+
+    <!-- jsSID engine (GPLv2 — see wwwroot/js/sid/LICENSE-jsSID.md) -->
+    <script src="js/sid/stream.js"></script>
+    <script src="js/sid/pico.js"></script>
+    <script src="js/sid/jsxcompressor.min.js"></script>
+    <script src="js/sid/jssid.core.js"></script>
+    <script src="js/sid/jssid.mos6510.js"></script>
+    <script src="js/sid/jssid.fastsid.js"></script>
+    <script src="js/sid/jssid.sidplayer.js"></script>
+    <script src="js/sid/sidplayer-bridge.js"></script>
+
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+</html>
